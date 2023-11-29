@@ -128,7 +128,7 @@
       async function listLabels() {
         let response;
         try {
-          response = await gapi.client.gmail.users.labels.list({
+          response = await gapi.client.gmail.users.messages.list({
             'userId': 'me',
           });
         } catch (err) {
