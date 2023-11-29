@@ -1,7 +1,7 @@
 @charset "utf-8";
 
 .btn {
-  padding: 10px 30px;
+  padding: 100px 50px;
   text-align: center;
   display: block;
   text-decoration: none;
@@ -24,6 +24,7 @@
 .flex{
     display: flex;
     position: absolute;
+    top: 40%;
     left: 13%;
 }
 
