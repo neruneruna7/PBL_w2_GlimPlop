@@ -11,6 +11,9 @@
     <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
     <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
 
+    <!-- test2.htmlへのハイパリンク -->
+    <a href="test2.html">test2.html</a>
+
     <pre id="content" style="white-space: pre-wrap;"></pre>
 
     <script type="text/javascript">
@@ -100,11 +103,15 @@
           tokenClient.requestAccessToken({prompt: 'consent'});
           console.log('requestAccessToken');
           console.log(tokenClient);
-          sessionStorage.setItem("token", gapi.client.getToken());
+
         } else {
+          console.log("token");
+        console.log(gapi.client.getToken());
           // Skip display of account chooser and consent dialog for an existing session.
           tokenClient.requestAccessToken({prompt: ''});
         }
+
+
       }
 
       /**
