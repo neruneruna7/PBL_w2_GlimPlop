@@ -128,15 +128,28 @@
       async function listLabels() {
         let response;
         let res2;
+        const labelName1 = '休講情報';//WebClassより
+        const labelName2 = '新しい課題';//GoogleClassRoomより
         try {
           response = await gapi.client.gmail.users.labels.list({
             'userId': 'me',
           });
           res2 = await gapi.client.request({
             'method': 'GET',
-            'path': 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
+            'path': 'https://gmail.googleapis.com/gmail/v1/users/me/labels',
             'params': {'access_token': gapi.client.getToken().access_token}
           });
+          
+          //ラベル名を検索
+          for(var label of res2){
+            if(label.name == labelName1){
+              //ラベル名がlabelName1と一致する場合の処理
+
+            }else if(label.name == labelName2){
+              //ラベル名がlabelName2と一致する場合の処理
+
+            }
+          }
 
           console.log(res2);
         } catch (err) {
