@@ -18,18 +18,3 @@
     display: block;
     font-size: 30px;
 }
-
-
-
-.flex{
-    display: flex;
-    position: absolute;
-    top: 40%;
-    left: 13%;
-}
-
-.flex p{
-  display: block;
-  font-size: 30px;
-}
-
