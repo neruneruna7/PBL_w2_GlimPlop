@@ -81,6 +81,23 @@
         }
       }
 
+
+      async function AuthClick() {
+        if (gapi.client.getToken() === null) {
+          // Prompt the user to select a Google Account and ask for consent to share their data
+          // when establishing a new session.
+          tokenClient.requestAccessToken({prompt: 'consent'});
+          
+          await listLabels();
+          console.log('requestAccessToken');
+          console.log(tokenClient);
+
+        } else {
+          // Skip display of account chooser and consent dialog for an existing session.
+          tokenClient.requestAccessToken({prompt: ''});
+        }
+      }
+
       /**
        *  Sign in the user upon button click.
        */
@@ -93,18 +110,14 @@
           document.getElementById('authorize_button').innerText = 'Refresh';
           await listLabels();
         };
-
-        if (gapi.client.getToken() === null) {
-          // Prompt the user to select a Google Account and ask for consent to share their data
-          // when establishing a new session.
-          tokenClient.requestAccessToken({prompt: 'consent'});
-          console.log('requestAccessToken');
-          console.log(tokenClient);
-          sessionStorage.setItem("token", gapi.client.getToken());
-        } else {
-          // Skip display of account chooser and consent dialog for an existing session.
-          tokenClient.requestAccessToken({prompt: ''});
-        }
+        AuthClick();
+        // response = await gapi.client.gmail.users.labels.list({
+        //     'userId': 'me',
+        //   });
+        const token = gapi.client.getToken();
+        console.log('token');
+        console.log(token);
+        localStorage.setItem("token", gapi.client.getToken());
       }
 
       /**
@@ -129,7 +142,10 @@
         let response;
         let res2;
         let res3;
+        let res_label_vec;
         try {
+          console.log('token label');
+          console.log(gapi.client.getToken());
           response = await gapi.client.gmail.users.labels.list({
             'userId': 'me',
           });
@@ -137,14 +153,19 @@
           // ドキュメントのURLとか諸々をもとに，次のようにリクエストを送信できそう
           res2 = await gapi.client.request({
             'method': 'GET',
-            'path': 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
+            'path': 'https://gmail.googleapis.com/gmail/v1/users/me/labels',
             'params': {'access_token': gapi.client.getToken().access_token}
           });
 
           // 指定したラベルを持つメールを取得したい
+          res_label_vec = await gapi.client.request({
+            'method': 'GET',
+            'path': 'https://gmail.googleapis.com/gmail/v1/users/me/labels',
+            'params': {'access_token': gapi.client.getToken().access_token}
+          });
 
 
-          // // フィルターを設定したい
+          // フィルターを設定したい
           // res3 = await gapi.client.request({
           //   'method': 'POST',
           //   'path': 'https://gmail.googleapis.com/gmail/v1/users/me/settings/filters',
@@ -153,9 +174,7 @@
           //     'criteria': {
           //       'from': 'from:
 
-
-
-          console.log(res2);
+          // console.log(res2);
         } catch (err) {
           document.getElementById('content').innerText = err.message;
           return;
@@ -171,6 +190,60 @@
             'Labels:\n');
         document.getElementById('content').innerText = output;
       }
+
+      /**
+       * @param {string[]} labels - The labels to search for.
+       * 文字列配列で渡したラベルがついたメッセージという条件をとり，その論理和を取ったメッセージidの集合を取得する
+       */
+      async function listMessages(labels) {
+        const labelQuery = labels.map(label => `label:${label}`).join(' OR ');
+        const response = await gapi.client.gmail.users.messages.list({
+          'userId': 'me',
+          'q': labelQuery
+        });
+
+        const messages = response.result.messages;
+        console.log(messages);
+
+        return messages;
+      }
+
+      async function getMessage(messageId) {
+        const response = await gapi.client.gmail.users.messages.get({
+          'userId': 'me',
+          'id': messageId,
+          'format': 'full'
+        });
+
+        // const message = response.result;
+        // const payload = message.payload;
+        // const headers = payload.headers;
+        // const subjectHeader = headers.find(header => header.name === 'Subject');
+        // const subject = subjectHeader ? subjectHeader.value : '';
+
+        // const parts = payload.parts;
+        // const bodyPart = parts.find(part => part.mimeType === 'text/plain');
+        // const body = bodyPart ? atob(bodyPart.body.data) : '';
+
+        // console.log(`Subject: ${subject}`);
+        // console.log(`Body: ${body}`);
+        console.log(response);
+
+        return response;
+      }
+
+            /**
+       * @param {string[]} labels - The labels to search for.
+       * 文字列配列で渡したラベルがついたメッセージという条件をとり，その論理和を取ったメッセージidの集合を取得する
+       * さらにそのメッセージの内容を取得する
+       */
+      async function listMessagesAndFetchContent(labels) {
+        const messages = await listMessages(labels);
+        const messageContents = await Promise.all(
+            messages.map(message => getMessage(message.id)));
+        console.log(messageContents);
+      }
+
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
