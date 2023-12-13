@@ -18,3 +18,13 @@
     display: block;
     font-size: 30px;
 }
+
+button {
+  padding: 10px; 
+  border: solid 3px #000; 
+  border-radius: 10px; 
+  width:300px; 
+  margin-top: 20px;
+  border: solid 3px #000000; 
+  background-color: #ccc
+}
