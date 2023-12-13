@@ -1,0 +1,35 @@
+@charset "utf-8";
+
+.btn {
+  padding: 100px 50px;
+  text-align: center;
+  display: block;
+  text-decoration: none;
+  color: black;
+
+}
+
+.text h1{
+    font-size: 50px;
+}
+
+.text p{
+    margin: 0 auto;
+    display: block;
+    font-size: 30px;
+}
+
+
+
+.flex{
+    display: flex;
+    position: absolute;
+    top: 40%;
+    left: 13%;
+}
+
+.flex p{
+  display: block;
+  font-size: 30px;
+}
+
