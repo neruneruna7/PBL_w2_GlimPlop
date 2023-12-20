@@ -26,5 +26,25 @@ button {
   width:300px; 
   margin-top: 20px;
   border: solid 3px #000000; 
-  background-color: #ccc
+  background-color: #ccc;
+  /* カーソルを変える */
+  cursor: pointer;
+  /* クリック時の動作 */
+  transition: all 0.1s ease;
+}
+
+/* ボタンホバー時に少し変える */
+button:hover {
+  background-color: #000000;
+  color: #fff;
+}
+
+a {
+  transition: all 0.1s ease;
+
+}
+/* aタグも同様に */
+a:hover {
+  background-color: #000000;
+  color: #fff;
 }

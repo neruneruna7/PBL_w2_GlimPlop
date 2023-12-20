@@ -15,6 +15,7 @@
                 <br>
                 <button id="signout_button" onclick="handleSignoutClick()">サインアウトする</button>
                 <pre id="content" style="white-space: pre-wrap;"></pre>
+                <button id="debug_signout_button" onclick="handleSignoutClick()">サインアウトする(debug)</button>
             </center>
         </div>
             <center>
@@ -119,13 +120,16 @@
             authClick()
             console.log('requestAccessToken');
             console.log(tokenClient);
+            let labels = await listLabels();
+            labelDisplay(labels)
           } else if (gapi.client.getToken() === null) {
             // Prompt the user to select a Google Account and ask for consent to share their data
             // when establishing a new session.
             tokenClient.requestAccessToken({prompt: 'consent'});
             
             await setToken();
-            await listLabels();
+            let labels = await listLabels();
+            labelDisplay(labels)
             console.log('requestAccessToken');
             console.log(tokenClient);
           } else {
