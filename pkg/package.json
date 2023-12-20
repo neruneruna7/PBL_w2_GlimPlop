@@ -1,0 +1,14 @@
+{
+  "name": "pbl_wasm",
+  "version": "0.1.0",
+  "files": [
+    "pbl_wasm_bg.wasm",
+    "pbl_wasm.js",
+    "pbl_wasm.d.ts"
+  ],
+  "module": "pbl_wasm.js",
+  "types": "pbl_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

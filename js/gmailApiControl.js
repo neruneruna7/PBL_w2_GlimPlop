@@ -83,6 +83,10 @@ async function listLabels() {
         document.getElementById('content').innerText = 'No labels found.';
         return;
     }
+
+}
+
+function labelDisplay(labels) {
     // Flatten to string to display
     const output = labels.reduce(
         (str, label) => `${str}${label.name}\n`,
@@ -141,6 +145,8 @@ async function listMessagesAndFetchContent(labels) {
     const messageContents = await Promise.all(
         messages.map(message => getMessage(message.id)));
     console.log(messageContents);
+
+    return messageContents;
 }
 
 /**

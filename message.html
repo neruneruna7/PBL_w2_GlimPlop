@@ -5,10 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>メッセージ</title>
     <!-- <link href="css/時間割表.css" rel="stylesheet"> -->
+    <script src="./js/gmailApiControl.js"></script>
 </head>
 <body>
-    <a class="pagetop" href="#"><div class="pagetop__arrow"></div></a>
-<button type="button" onclick="history.back()" style="font-size: 20px; padding: 15px; float: right; margin-right: 65px;">トップへ</button>
+    <!-- <a class="pagetop" href="#"><div class="pagetop__arrow">ttt</div></a> -->
+  
+    <button type="button" onclick="history.back()" style="font-size: 20px; padding: 15px; float: right; margin-right: 65px; ">トップへ</button>
+
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
+    <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+    
+
+    <pre id="content" style="white-space: pre-wrap; margin: 5%; padding:5%; background-color:beige;"></pre>
+
+    <script type="module">
+      import init, {parse_gmail_json}  from "./pkg/pbl_wasm.js";
+      init();
+
+      function parse_gmail_json_wrapper(json) {
+        return parse_gmail_json(json);
+      }
+
+      window.parse_gmail_json = parse_gmail_json_wrapper;
+    </script>
+    <script type="text/javascript">
+        /* exported gapiLoaded */
+        /* exported gisLoaded */
+        /* exported handleAuthClick */
+        /* exported handleSignoutClick */
+        // Rustで作ったWASMを読み込む
+        // parse_gmail_jsonは，gmailのAPIから帰ってきたjsonをパースし，from, subject, bodyを取り出す
+        // bodyはbase64エンコーディングされていたので，デコードしたものを返す
+        
+        // TODO(developer): Set to client ID and API key from the Developer Console
+        // 仕方ないので認証情報をハードコーディングしていまう
+        // よくないがめんどうなので
+        const CLIENT_ID = '1002341278402-hngrndk4cj5dcg4ssipolc60qvsigees.apps.googleusercontent.com';
+        const API_KEY = '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';
+  
+        // Discovery doc URL for APIs used by the quickstart
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest';
+  
+        // Authorization scopes required by the API; multiple scopes can be
+        // included, separated by spaces.
+        const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
+  
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        document.getElementById('authorize_button').style.visibility = 'hidden';
+        document.getElementById('signout_button').style.visibility = 'hidden';
+
+        /**
+         * Callback after api.js is loaded.
+         */
+        function gapiLoaded() {
+          gapi.load('client', initializeGapiClient);
+        }
+
+        /**
+         * Callback after the API client is loaded. Loads the
+         * discovery doc to initialize the API.
+         */
+        async function initializeGapiClient() {
+          await gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: [DISCOVERY_DOC],
+          });
+          gapiInited = true;
+          maybeEnableButtons();
+        }
+
+        /**
+         * Callback after Google Identity Services are loaded.
+         */
+        function gisLoaded() {
+          tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: '', // defined later
+          });
+          gisInited = true;
+          maybeEnableButtons();
+        }
+
+        /**
+         * Enables user interaction after all libraries are loaded.
+         */
+        function maybeEnableButtons() {
+          if (gapiInited && gisInited) {
+            document.getElementById('authorize_button').style.visibility = 'visible';
+          }
+        }
+
+        async function authClick(){
+          document.getElementById('signout_button').style.visibility = 'visible';
+            document.getElementById('authorize_button').innerText = 'Refresh';
+            await listLabels();
+        }
+
+        function messageDisplay(messages) {
+            // Flatten to string to display
+            // const output = messages.reduce(
+            //     (str, message) => `${str}${message.label}\n`,
+            //     'Labels:\n');
+
+            // console.log('messages Display');
+            // console.log(messages);
+
+            let str = JSON.stringify(messages);
+            // console.log(str);
+
+          
+            let res =  window.parse_gmail_json(str);
+            // jsonに変換
+            let parsed_data = JSON.parse(res);
+            console.log("res");
+            console.log(parsed_data);
+
+            let displayMsg = "";
+
+            for (let i = 0; i < parsed_data.length; i++) {
+                let item = parsed_data[i];
+                let from = item.from;
+                let subject = item.subject;
+                let body = item.body;
+
+                console.log(subject);
+                console.log(from);
+                console.log(body);
+
+                // console.log(item.result.snippet);
+
+                displayMsg += `送信元: `
+                displayMsg += `${from}\n`
+                displayMsg += `タイトル: `
+                displayMsg += `${subject}\n`
+                displayMsg += `本文: `
+                displayMsg += `${body}\n`
+                displayMsg += `\n`
+                displayMsg += `------------------------------`
+                displayMsg += `------------------------------`
+                displayMsg += `\n`
+            }
+
+            // let messages2 = JSON.stringify(displayMsg);
+            const output = displayMsg;
+
+            document.getElementById('content').innerText = output;
+        }
+        /**
+         *  Sign in the user upon button click.
+         * サインインボタンを押したときの処理
+         */
+        async function handleAuthClick() {
+          tokenClient.callback = async (resp) => {
+            if (resp.error !== undefined) {
+              throw (resp);
+            }
+            authClick()
+          };
+          let result = setGmailToken();
+          if (result) {
+            authClick()
+            let messages = await listMessagesAndFetchContent(["課題"]);
+            console.log('messages');
+            // console.log(tokenClient);
+            console.log(messages);
+            messageDisplay(messages);
+          } else if (gapi.client.getToken() === null) {
+            // Prompt the user to select a Google Account and ask for consent to share their data
+            // when establishing a new session.
+            tokenClient.requestAccessToken({prompt: 'consent'});
+            
+            await setToken();
+            await listLabels();
+            let messages = await listMessagesAndFetchContent(["課題"]);
+            console.log('messages');
+            // console.log(tokenClient);
+            console.log(messages);
+            messageDisplay(messages);
+          } else {
+            // Skip display of account chooser and consent dialog for an existing session.
+            tokenClient.requestAccessToken({prompt: ''});
+          }
+          authClick2();
+        }
+  
+        /**
+         *  Sign out the user upon button click.
+         * サインアウトボタンを押したときの処理
+         *
+         */
+        function handleSignoutClick() {
+          const token = gapi.client.getToken();
+          if (token !== null) {
+            google.accounts.oauth2.revoke(token.access_token);
+            localStorage.removeItem('gmailToken'); // Remove the token from local storage
+            deleteGmailToken();
+            document.getElementById('content').innerText = '';
+            document.getElementById('authorize_button').innerText = 'Authorize';
+            document.getElementById('signout_button').style.visibility = 'hidden';
+          }
+        }
+      </script>
+
+      <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+      <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
 </html>
 
