@@ -15,7 +15,13 @@
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
     <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
-    
+
+
+    <br>
+    <p>ラベル名を指定すると，指定したラベルの付いたメッセージを取得します</p>
+    <p>ラベルはGmailから設定することができます</p>
+    <p>現在はAuthorizeボタン，またはRefreshを押さないと動作しません．それでも動作しない場合，一度Sign Outボタンを押してから再操作してください</p>
+    <input type="text" id="myInput" placeholder="ここにラベル名を入力してください", style="white-space: pre-wrap; margin-left: 5%; margin-right: 5%; margin-top: 5%; background-color:beige; ">
 
     <pre id="content" style="white-space: pre-wrap; margin: 5%; padding:5%; background-color:beige;"></pre>
 
@@ -146,8 +152,8 @@
                 displayMsg += `本文: `
                 displayMsg += `${body}\n`
                 displayMsg += `\n`
-                displayMsg += `------------------------------`
-                displayMsg += `------------------------------`
+                displayMsg += `------------------------------\n`
+                displayMsg += `------------------------------\n`
                 displayMsg += `\n`
             }
 
@@ -170,7 +176,8 @@
           let result = setGmailToken();
           if (result) {
             authClick()
-            let messages = await listMessagesAndFetchContent(["課題"]);
+            let label_name = document.getElementById("myInput").value;
+            let messages = await listMessagesAndFetchContent([label_name]);
             console.log('messages');
             // console.log(tokenClient);
             console.log(messages);
