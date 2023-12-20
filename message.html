@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>メッセージ</title>
     <!-- <link href="css/時間割表.css" rel="stylesheet"> -->
+    <script src="./js/gmailApiControl.js"></script>
 </head>
 <body>
     <!-- <a class="pagetop" href="#"><div class="pagetop__arrow">ttt</div></a> -->
@@ -18,14 +19,25 @@
 
     <pre id="content" style="white-space: pre-wrap; margin: 5%; padding:5%; background-color:beige;"></pre>
 
+    <script type="module">
+      import init, {parse_gmail_json}  from "./pkg/pbl_wasm.js";
+      init();
 
-    
+      function parse_gmail_json_wrapper(json) {
+        return parse_gmail_json(json);
+      }
+
+      window.parse_gmail_json = parse_gmail_json_wrapper;
+    </script>
     <script type="text/javascript">
         /* exported gapiLoaded */
         /* exported gisLoaded */
         /* exported handleAuthClick */
         /* exported handleSignoutClick */
-  
+        // Rustで作ったWASMを読み込む
+        // parse_gmail_jsonは，gmailのAPIから帰ってきたjsonをパースし，from, subject, bodyを取り出す
+        // bodyはbase64エンコーディングされていたので，デコードしたものを返す
+        
         // TODO(developer): Set to client ID and API key from the Developer Console
         // 仕方ないので認証情報をハードコーディングしていまう
         // よくないがめんどうなので
@@ -100,16 +112,43 @@
             //     (str, message) => `${str}${message.label}\n`,
             //     'Labels:\n');
 
-            console.log('messages Display');
-            console.log(messages);
+            // console.log('messages Display');
+            // console.log(messages);
+
+            let str = JSON.stringify(messages);
+            // console.log(str);
+
+          
+            let res =  window.parse_gmail_json(str);
+            // jsonに変換
+            let parsed_data = JSON.parse(res);
+            console.log("res");
+            console.log(parsed_data);
 
             let displayMsg = "";
 
-            for (let i = 0; i < messages.length; i++) {
-                let item = messages[i];
-                console.log(item.result.snippet);
+            for (let i = 0; i < parsed_data.length; i++) {
+                let item = parsed_data[i];
+                let from = item.from;
+                let subject = item.subject;
+                let body = item.body;
 
-                displayMsg += `${item.result.snippet}\n\n`
+                console.log(subject);
+                console.log(from);
+                console.log(body);
+
+                // console.log(item.result.snippet);
+
+                displayMsg += `送信元: `
+                displayMsg += `${from}\n`
+                displayMsg += `タイトル: `
+                displayMsg += `${subject}\n`
+                displayMsg += `本文: `
+                displayMsg += `${body}\n`
+                displayMsg += `\n`
+                displayMsg += `------------------------------`
+                displayMsg += `------------------------------`
+                displayMsg += `\n`
             }
 
             // let messages2 = JSON.stringify(displayMsg);
@@ -172,7 +211,7 @@
           }
         }
       </script>
-      <script src="./js/gmailApiControl.js"></script>
+
       <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
       <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
